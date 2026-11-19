@@ -15,3 +15,33 @@ class InterfaceResourcePoolResourceMarket:
 
     def to_string(self) -> str:
         assert False
+
+
+class InterfaceTownsCheckAndBumpStep:
+    def get_max_number_of_houses(self) -> int:
+        assert False
+
+    def start_step2(self) -> None:
+        assert False
+
+    def start_step3(self) -> None:
+        assert False
+
+
+class InterfacePowerPlantMarketCheckAndBumpStep:
+    def is_step3_start(self) -> bool:
+        assert False
+
+    def start_step2(self) -> None:
+        assert False
+
+    def start_step3(self) -> None:
+        assert False
+
+
+class InterfaceResourceMarketCheckAndBumpStep:
+    def start_step2(self) -> None:
+        assert False
+
+    def start_step3(self) -> None:
+        assert False
