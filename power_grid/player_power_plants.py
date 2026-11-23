@@ -25,10 +25,14 @@ class PlayerPowerPlants:
             raise ValueError("The player does not own a power plant.")
         return max(self._power_plants, key=lambda plant: plant.number.number).number
 
+    def can_receive_power_plant(self, ppn: PowerPlantNumber) -> bool:
+        """Check the ownership limit and duplicate-number constraint without mutation."""
+        return len(self._power_plants) < self.MAX_POWER_PLANTS and all(
+            plant.number != ppn for plant in self._power_plants
+        )
+
     def receive_power_plant(self, power_plant: PowerPlant) -> bool:
-        if len(self._power_plants) >= self.MAX_POWER_PLANTS:
-            return False
-        if any(plant.number == power_plant.number for plant in self._power_plants):
+        if not self.can_receive_power_plant(power_plant.number):
             return False
         self._power_plants.append(power_plant)
         return True
@@ -39,11 +43,16 @@ class PlayerPowerPlants:
         """new_resources represents the player's complete inventory after the
         removal and any resource transfers or returns have been decided."""
 
-        plant_to_remove = next((plant for plant in self._power_plants if plant.number == ppn), None)
+        plant_to_remove = next(
+            (plant for plant in self._power_plants if plant.number == ppn),
+            None,
+        )
         if plant_to_remove is None:
             return RequestError("The player does not own that power plant.")
 
-        remaining_plants = [plant for plant in self._power_plants if plant.number != ppn]
+        remaining_plants = [
+            plant for plant in self._power_plants if plant.number != ppn
+        ]
         if not self._resources_fit(remaining_plants, new_resources):
             return RequestError("The remaining power plants cannot store those resources.")
 
@@ -55,7 +64,10 @@ class PlayerPowerPlants:
         for number_to_use in range(len(self._power_plants) + 1):
             for plants in combinations(self._power_plants, number_to_use):
                 if self._can_fuel_plants(plants, resources, allow_unused=True):
-                    maximum = max(maximum, sum(plant.number_of_cities for plant in plants))
+                    maximum = max(
+                        maximum,
+                        sum(plant.number_of_cities for plant in plants),
+                    )
         return maximum
 
     def can_store_resources(self, resources: Sequence[Resource]) -> bool:
@@ -68,12 +80,15 @@ class PlayerPowerPlants:
     ) -> int | RequestError:
         """This method does not consume resources. The owning resource component
         should remove the validated fuel from its inventory after success."""
-        
+
         if len(ppns) != len(set(ppns)):
             return RequestError("A power plant cannot be selected more than once.")
 
         selected_numbers = set(ppns)
-        plants = [plant for plant in self._power_plants if plant.number in selected_numbers]
+        plants = [
+            plant for plant in self._power_plants
+            if plant.number in selected_numbers
+        ]
         if len(plants) != len(ppns):
             return RequestError("The player does not own every selected power plant.")
 
@@ -83,7 +98,11 @@ class PlayerPowerPlants:
         return sum(plant.number_of_cities for plant in plants)
 
     @classmethod
-    def _resources_fit(cls, plants: Sequence[PowerPlant], resources: Sequence[Resource]) -> bool:
+    def _resources_fit(
+        cls,
+        plants: Sequence[PowerPlant],
+        resources: Sequence[Resource],
+    ) -> bool:
         return cls._can_assign_resources(plants, resources, storage=True)
 
     @classmethod
@@ -93,7 +112,12 @@ class PlayerPowerPlants:
         resources: Sequence[Resource],
         allow_unused: bool = False,
     ) -> bool:
-        return cls._can_assign_resources(plants, resources, storage=False, allow_unused=allow_unused)
+        return cls._can_assign_resources(
+            plants,
+            resources,
+            storage=False,
+            allow_unused=allow_unused,
+        )
 
     @staticmethod
     def _can_assign_resources(
@@ -121,15 +145,16 @@ class PlayerPowerPlants:
 
                 resource = accepted[resource_index]
                 maximum = min(available[resource], remaining)
+
                 for count in range(maximum + 1):
                     available[resource] -= count
                     if assign_resource_type(resource_index + 1, remaining - count):
                         available[resource] += count
                         return True
                     available[resource] += count
+
                 return False
 
             return assign_resource_type(0, limit)
 
         return assign_plant(0)
-
