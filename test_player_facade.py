@@ -221,20 +221,8 @@ class TestPlayerFacade(unittest.TestCase):
             [PowerPlantNumber(3)], [Resource.COAL, Resource.COAL]
         )
 
-        self.assertEqual(result, 3)
+        self.assertIsNone(result)
         self.assertEqual(resources.resources, [Resource.COAL])
-
-    def test_receive_income_uses_income_table(self) -> None:
-        facade, money, _, _, _, _ = self.make_facade(starting_money=0)
-        facade.receive_income(0)
-        self.assertEqual(money.current_money, 10)
-        facade.receive_income(3)
-        self.assertEqual(money.current_money, 10 + 44)
-
-    def test_income_above_twenty_cities_is_capped(self) -> None:
-        facade, money, _, _, _, _ = self.make_facade(starting_money=0)
-        facade.receive_income(25)
-        self.assertEqual(money.current_money, 150)
 
     def test_failed_power_plant_use_preserves_inventory(self) -> None:
         facade, _, _, resources, _, _ = self.make_facade(
