@@ -1,6 +1,7 @@
 # pylint: disable=unused-argument, duplicate-code
 from typing import Sequence
 from power_grid.simple_types import (
+    PhaseStatus,
     PlayerColor,
     PowerPlant,
     PowerPlantNumber,
@@ -91,7 +92,11 @@ class InterfacePlayerBoardFacade:
 
     def use_power_plants(
         self, ppns: Sequence[PowerPlantNumber], resources_to_burn: Sequence[Resource]
-    ) -> RequestError | None:
+    ) -> int | RequestError:
+        """Burns the fuel and returns how many cities the plants can power."""
+        assert False
+
+    def receive_income(self, powered_cities: int) -> None:
         assert False
 
     def state(self) -> str:
@@ -130,7 +135,7 @@ class InterfacePowerPlantMarket(InterfacePowerPlantMarketCheckAndBumpStep):
     def take_power_plant(self, ppn: PowerPlantNumber) -> PowerPlant:
         assert False
 
-    def remove_discounted_power_plant(self, value: int) -> None:
+    def remove_lowest_power_plant(self) -> None:
         assert False
 
     def remove_power_plants_cheaper_than(self, value: int) -> None:
@@ -188,4 +193,46 @@ class InterfaceDeterminePlayerOrder:
         assert False
 
     def game_result(self) -> list[PlayerColor]:
+        assert False
+
+
+class InterfaceConnections:
+    """Boundary for computing the cost of connecting towns"""
+
+    def calculate_connecting_cost(self, from_towns: Sequence[str],
+                                  to_towns: Sequence[str]) -> int:
+        assert False
+
+
+class InterfaceShuffler:
+    """Controls randomness so that tests can be deterministic"""
+
+    def shuffle(self, power_plants: Sequence[PowerPlant]) -> list[PowerPlant]:
+        assert False
+
+
+class InterfaceAuctionPowerPlants:
+    """Phase 2: auctioning power plants"""
+
+    def start_phase(self, player_order: Sequence[PlayerColor], first_round: bool = False) -> None:
+        assert False
+
+    def start_auction(self, player: PlayerColor, ppn: PowerPlantNumber,
+                      price: int) -> PhaseStatus | RequestError:
+        assert False
+
+    def raise_bid(self, player: PlayerColor, price: int) -> PhaseStatus | RequestError:
+        assert False
+
+    def pass_bid(self, player: PlayerColor) -> PhaseStatus | RequestError:
+        assert False
+
+    def pass_phase(self, player: PlayerColor) -> PhaseStatus | RequestError:
+        assert False
+
+    def discard_power_plant(self, player: PlayerColor, ppn: PowerPlantNumber,
+                            removed_resources: Sequence[Resource]) -> PhaseStatus | RequestError:
+        assert False
+
+    def get_state(self) -> str:
         assert False
