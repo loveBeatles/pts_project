@@ -236,3 +236,45 @@ class InterfaceAuctionPowerPlants:
 
     def get_state(self) -> str:
         assert False
+
+
+class InterfaceBuyingResources:
+    """Phase 3: buying resources"""
+
+    def start_phase(self, player_order: Sequence[PlayerColor]) -> None:
+        assert False
+
+    def buy_resources(self, player: PlayerColor,
+                      removed_resources: Sequence[Resource]) -> PhaseStatus | RequestError:
+        assert False
+
+    def get_state(self) -> str:
+        assert False
+
+
+class InterfaceBuildingHouses:
+    """Phase 4: building houses"""
+
+    def start_phase(self, player_order: Sequence[PlayerColor]) -> None:
+        assert False
+
+    def build_houses(self, player: PlayerColor,
+                     town_names: Sequence[str]) -> PhaseStatus | RequestError:
+        assert False
+
+    def get_state(self) -> str:
+        assert False
+
+
+class InterfaceBureaucracy:
+    """Phase 5: powering cities and refilling markets"""
+
+    def start_phase(self, player_order: Sequence[PlayerColor]) -> None:
+        assert False
+
+    def use_power_plants(self, player: PlayerColor, ppns: Sequence[PowerPlantNumber],
+                         resources_to_burn: Sequence[Resource]) -> PhaseStatus | RequestError:
+        assert False
+
+    def get_state(self) -> str:
+        assert False
