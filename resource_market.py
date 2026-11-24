@@ -58,8 +58,7 @@ class ResourceMarket(InterfaceResourceMarket):
 
     def refill(self) -> None:
         for resource in Resource:
-            free_space = ResourceMarket.MAX_RESOURCES[resource] - self._resources[resource]
-            refill_count = min(self._refilling_pattern[self._step][resource], free_space)
+            refill_count = self._refilling_pattern[self._step][resource]
             from_pool = self._pool.take_resources(refill_count*[resource,])
             assert all(x == resource for x in from_pool)
             self._resources[resource] += len(from_pool)
