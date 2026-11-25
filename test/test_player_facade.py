@@ -221,7 +221,7 @@ class TestPlayerFacade(unittest.TestCase):
             [PowerPlantNumber(3)], [Resource.COAL, Resource.COAL]
         )
 
-        self.assertIsNone(result)
+        self.assertEqual(result, 3)
         self.assertEqual(resources.resources, [Resource.COAL])
 
     def test_failed_power_plant_use_preserves_inventory(self) -> None:
