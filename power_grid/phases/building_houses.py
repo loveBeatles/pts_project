@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 
 from power_grid.interfaces import (
+    InterfaceBuildingHouses,
     InterfaceCheckAndBumpStep,
     InterfacePlayerBoardFacade,
     InterfacePowerPlantMarket,
@@ -12,7 +13,7 @@ from power_grid.phases.turn_based_phase import TurnBasedPhase
 from power_grid.simple_types import PhaseStatus, PlayerColor, RequestError
 
 
-class BuildingHouses(TurnBasedPhase):
+class BuildingHouses(TurnBasedPhase, InterfaceBuildingHouses):
     """Manages Phase 4 where players connect cities in reverse player order"""
 
     def __init__(
@@ -55,5 +56,5 @@ class BuildingHouses(TurnBasedPhase):
 
         status = self._advance_turn()
         if status == PhaseStatus.PHASE_ENDS:
-            self._check_and_bump_step.check_and_bump_to_step_2()
+            self._check_and_bump_step.check_and_bump_to_step2()
         return status

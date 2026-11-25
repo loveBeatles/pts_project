@@ -1,7 +1,10 @@
 from collections import Counter
 from collections.abc import Sequence
 
-from power_grid.interfaces import InterfaceResourceMarket
+from power_grid.interfaces import (
+    InterfaceResourceMarket,
+    InterfaceResourcePoolPlayerResources,
+)
 from power_grid.player_power_plants import PlayerPowerPlants
 from power_grid.simple_types import PowerPlantNumber, RequestError, Resource
 
@@ -12,16 +15,21 @@ class PlayerResources:
     _resources: list[Resource]
     _power_plants: PlayerPowerPlants
     _resource_market: InterfaceResourceMarket
+    _resource_pool: InterfaceResourcePoolPlayerResources | None
 
     def __init__(
         self,
         power_plants: PlayerPowerPlants,
         resource_market: InterfaceResourceMarket,
         resources: Sequence[Resource] = (),
+        resource_pool: InterfaceResourcePoolPlayerResources | None = None,
     ) -> None:
-        """Create a resource inventory and reject contents that cannot be stored."""
+        """Create a resource inventory and reject contents that cannot be stored.
+
+        Burnt and discarded resources are returned to resource_pool (if given)."""
         self._power_plants = power_plants
         self._resource_market = resource_market
+        self._resource_pool = resource_pool
         self._resources = list(resources)
         if not self._power_plants.can_store_resources(self._resources):
             raise ValueError("The power plants cannot store the starting resources.")
@@ -44,6 +52,7 @@ class PlayerResources:
             return error
 
         self._resources = remaining
+        self._return_to_pool(removed_resources)
         return None
 
     def number_of_connectable_cities(self) -> int:
@@ -79,7 +88,12 @@ class PlayerResources:
             return result
 
         self._resources = remaining
+        self._return_to_pool(fuel)
         return result
+
+    def _return_to_pool(self, resources: Sequence[Resource]) -> None:
+        if self._resource_pool is not None and resources:
+            self._resource_pool.return_resources(resources)
 
     def _inventory_without(
         self, resources_to_remove: Sequence[Resource]

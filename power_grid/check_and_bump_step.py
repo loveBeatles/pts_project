@@ -1,12 +1,13 @@
 from __future__ import annotations
 from power_grid.interfaces import (
+    InterfaceCheckAndBumpStep,
     InterfaceTownsCheckAndBumpStep,
     InterfacePowerPlantMarketCheckAndBumpStep,
     InterfaceResourceMarketCheckAndBumpStep,
 )
 
 
-class CheckAndBumpStep:
+class CheckAndBumpStep(InterfaceCheckAndBumpStep):
     _step: int
     _num_players: int
     _towns: InterfaceTownsCheckAndBumpStep

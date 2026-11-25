@@ -1,9 +1,10 @@
 from __future__ import annotations
 import heapq
 from typing import Sequence
+from power_grid.interfaces import InterfaceConnections
 
 
-class Connections:
+class Connections(InterfaceConnections):
     _distances: list[tuple[str, str, int]]
     _graph: dict[str, list[tuple[str, int]]]
 

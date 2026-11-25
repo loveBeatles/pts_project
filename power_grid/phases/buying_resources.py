@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from power_grid.interfaces import InterfacePlayerBoardFacade
+from power_grid.interfaces import InterfaceBuyingResources, InterfacePlayerBoardFacade
 from power_grid.phases.turn_based_phase import TurnBasedPhase
 from power_grid.simple_types import PhaseStatus, PlayerColor, RequestError, Resource
 
 
-class BuyingResources(TurnBasedPhase):
+class BuyingResources(TurnBasedPhase, InterfaceBuyingResources):
     """Manages Phase 3 where players buy fuel in reverse player order"""
 
     def __init__(

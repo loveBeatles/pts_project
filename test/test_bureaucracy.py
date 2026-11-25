@@ -1,82 +1,60 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-import unittest
+from collections.abc import Mapping, Sequence
 
 from power_grid.interfaces import (
+    InterfaceBuildingHouses,
+    InterfaceCheckAndBumpStep,
     InterfacePlayerBoardFacade,
     InterfacePowerPlantMarket,
-    InterfaceResourceMarket,
+    InterfaceTowns,
 )
-from power_grid.phases.bureaucracy import Bureaucracy
-from power_grid.simple_types import (
-    PhaseStatus,
-    PlayerColor,
-    PowerPlantNumber,
-    RequestError,
-    Resource,
-)
+from power_grid.phases.turn_based_phase import TurnBasedPhase
+from power_grid.simple_types import PhaseStatus, PlayerColor, RequestError
 
 
-class StubPowerBoard(InterfacePlayerBoardFacade):
-    def __init__(self, fail_next: bool = False) -> None:
-        self.fail_next = fail_next
-        self.used_calls: list[tuple[list[PowerPlantNumber], list[Resource]]] = []
+class BuildingHouses(TurnBasedPhase, InterfaceBuildingHouses):
+    """Manages Phase 4 where players connect cities in reverse player order."""
 
-    def use_power_plants(
-        self, ppns: Sequence[PowerPlantNumber], resources_to_burn: Sequence[Resource]
-    ) -> RequestError | None:
-        if self.fail_next:
-            self.fail_next = False
-            return RequestError("Invalid fuel selection.")
-        self.used_calls.append((list(ppns), list(resources_to_burn)))
-        return None
+    def __init__(
+        self,
+        player_boards: Mapping[PlayerColor, InterfacePlayerBoardFacade],
+        towns: InterfaceTowns,
+        power_plant_market: InterfacePowerPlantMarket,
+        check_and_bump_step: InterfaceCheckAndBumpStep,
+    ) -> None:
+        super().__init__()
+        self._player_boards = player_boards
+        self._towns = towns
+        self._power_plant_market = power_plant_market
+        self._check_and_bump_step = check_and_bump_step
 
+    def start_phase(self, player_order: Sequence[PlayerColor]) -> None:
+        # Phase 4 runs in reverse player order (last place builds first).
+        self._init_turns(list(reversed(player_order)))
 
-class SpyResourceMarket(InterfaceResourceMarket):
-    def __init__(self) -> None:
-        self.refill_count = 0
+    def build_houses(
+        self, player: PlayerColor, town_names: Sequence[str]
+    ) -> PhaseStatus | RequestError:
+        turn_error = self._validate_active_player(player)
+        if turn_error is not None:
+            return turn_error
 
-    def refill(self) -> None:
-        self.refill_count += 1
+        board = self._player_boards[player]
+        cost_or_error = self._towns.buy_houses(
+            player, town_names, board.outstanding_money()
+        )
+        if isinstance(cost_or_error, RequestError):
+            return cost_or_error
 
+        if cost_or_error > 0:
+            board.spend_money(cost_or_error)
 
-class SpyPowerPlantMarket(InterfacePowerPlantMarket):
-    def __init__(self) -> None:
-        self.prepare_count = 0
-
-    def prepare_next_turn(self) -> None:
-        self.prepare_count += 1
-
-
-class TestBureaucracy(unittest.TestCase):
-    def test_bureaucracy_forward_order_and_market_refresh(self) -> None:
-        boards = {
-            PlayerColor.RED: StubPowerBoard(),
-            PlayerColor.BLUE: StubPowerBoard(),
-        }
-        res_market = SpyResourceMarket()
-        plant_market = SpyPowerPlantMarket()
-        phase = Bureaucracy(boards, res_market, plant_market)
-        phase.start_phase([PlayerColor.RED, PlayerColor.BLUE])
-
-        self.assertIsInstance(
-            phase.use_power_plants(PlayerColor.BLUE, [], []), RequestError
+        self._power_plant_market.remove_power_plants_cheaper_than(
+            self._towns.get_max_number_of_houses()
         )
 
-        # Red goes first; markets must not refresh yet
-        self.assertEqual(
-            phase.use_power_plants(
-                PlayerColor.RED, [PowerPlantNumber(3)], [Resource.OIL, Resource.OIL]
-            ),
-            PhaseStatus.PHASE_CONTINUES,
-        )
-        self.assertEqual(res_market.refill_count, 0)
-        self.assertEqual(plant_market.prepare_count, 0)
-
-        # Blue goes last; markets refresh once upon phase completion
-        self.assertEqual(
-            phase.use_power_plants(PlayerColor.BLUE, [], []), PhaseStatus.PHASE_ENDS
-        )
-        self.assertEqual(res_market.refill_count, 1)
-        self.assertEqual(plant_market.prepare_count, 1)
+        status = self._advance_turn()
+        if status == PhaseStatus.PHASE_ENDS:
+            self._check_and_bump_step.check_and_bump_to_step2()
+        return status

@@ -2,7 +2,7 @@ from collections import Counter
 from collections.abc import Sequence
 import unittest
 
-from power_grid.interfaces import InterfaceResourceMarket
+from power_grid.interfaces import InterfaceResourceMarket, InterfaceResourcePoolPlayerResources
 from power_grid.player_power_plants import PlayerPowerPlants
 from power_grid.player_resources import PlayerResources
 from power_grid.simple_types import PowerPlant, PowerPlantNumber, RequestError, Resource
@@ -25,6 +25,14 @@ class ResourceMarketFake(InterfaceResourceMarket):
         self.take_calls.append(requested)
         for resource in requested:
             self.available.remove(resource)
+
+
+class ResourcePoolSpy(InterfaceResourcePoolPlayerResources):
+    def __init__(self) -> None:
+        self.returned: list[Resource] = []
+
+    def return_resources(self, resources: Sequence[Resource]) -> None:
+        self.returned.extend(resources)
 
 
 class TestPlayerResources(unittest.TestCase):
@@ -237,6 +245,44 @@ class TestPlayerResources(unittest.TestCase):
             [Resource.COAL, Resource.COAL, Resource.OIL],
         )
 
+
+    # Returning resources to the general supply
+
+    def test_burnt_fuel_returns_to_pool(self) -> None:
+        pool = ResourcePoolSpy()
+        player = PlayerResources(
+            PlayerPowerPlants([self.make_plant(3, [Resource.COAL], 2, 1)]),
+            ResourceMarketFake([]),
+            [Resource.COAL, Resource.COAL, Resource.COAL],
+            resource_pool=pool,
+        )
+        player.use_power_plant([PowerPlantNumber(3)], [Resource.COAL, Resource.COAL])
+        self.assertEqual(pool.returned, [Resource.COAL, Resource.COAL])
+
+    def test_failed_use_returns_nothing_to_pool(self) -> None:
+        pool = ResourcePoolSpy()
+        player = PlayerResources(
+            PlayerPowerPlants([self.make_plant(3, [Resource.COAL], 2, 1)]),
+            ResourceMarketFake([]),
+            [Resource.COAL],
+            resource_pool=pool,
+        )
+        player.use_power_plant([PowerPlantNumber(3)], [Resource.COAL, Resource.COAL])
+        self.assertEqual(pool.returned, [])
+
+    def test_discarded_resources_return_to_pool(self) -> None:
+        pool = ResourcePoolSpy()
+        player = PlayerResources(
+            PlayerPowerPlants([
+                self.make_plant(3, [Resource.COAL], 1, 1),
+                self.make_plant(4, [Resource.OIL], 1, 1),
+            ]),
+            ResourceMarketFake([]),
+            [Resource.COAL, Resource.OIL],
+            resource_pool=pool,
+        )
+        player.remove_power_plant(PowerPlantNumber(4), [Resource.OIL])
+        self.assertEqual(pool.returned, [Resource.OIL])
 
 if __name__ == "__main__":
     unittest.main()

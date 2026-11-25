@@ -15,6 +15,8 @@ from power_grid.simple_types import PowerPlantNumber, RequestError, Resource
 class PlayerFacade(InterfacePlayerBoardFacade):
     """Delegate player-board operations to the relevant state components."""
 
+    MAX_PAID_CITIES = 20
+
     _player_money: PlayerMoney
     _player_power_plants: PlayerPowerPlants
     _player_resources: PlayerResources
@@ -91,11 +93,12 @@ class PlayerFacade(InterfacePlayerBoardFacade):
         self,
         ppns: Sequence[PowerPlantNumber],
         resources_to_burn: Sequence[Resource],
-    ) -> RequestError | None:
-        result = self._player_resources.use_power_plant(ppns, resources_to_burn)
-        if isinstance(result, RequestError):
-            return result
-        return None
+    ) -> int | RequestError:
+        return self._player_resources.use_power_plant(ppns, resources_to_burn)
+
+    def receive_income(self, powered_cities: int) -> None:
+        """Income table ends at 20 cities; more cities pay the same."""
+        self._player_money.receive_money(min(powered_cities, self.MAX_PAID_CITIES))
 
     def state(self) -> str:
         best_plant_number: int | None

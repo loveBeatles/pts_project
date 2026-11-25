@@ -71,7 +71,7 @@ class TestPlayerFacade(unittest.TestCase):
             number_of_cities,
         )
 
-    def make_facade(
+    def make_facade(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         owned_plants: Sequence[PowerPlant] = (),
         starting_resources: Sequence[Resource] = (),

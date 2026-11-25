@@ -3,10 +3,13 @@ import json
 from collections import Counter
 from typing import Mapping, Sequence, Any
 from power_grid.simple_types import Resource
-from power_grid.interfaces import InterfaceResourcePoolResourceMarket
+from power_grid.interfaces import (
+    InterfaceResourcePoolResourceMarket,
+    InterfaceResourceMarket,
+)
 
 
-class ResourceMarket:
+class ResourceMarket(InterfaceResourceMarket):
     _step: int
     _resources: dict[Resource, int]
     _pool: InterfaceResourcePoolResourceMarket
@@ -61,10 +64,10 @@ class ResourceMarket:
             self._resources[resource] += len(from_pool)
             assert self._resources[resource] <= ResourceMarket.MAX_RESOURCES[resource]
 
-    def get_price(self, desired: list[Resource]) -> int | None:
+    def get_price(self, resources: Sequence[Resource]) -> int | None:
         total_price = 0
         unavailable: list[Resource] = []
-        desired_counts = Counter(desired)
+        desired_counts = Counter(resources)
         for resource in Resource:
             required: int = desired_counts[resource]
             available: int = self._resources[resource]
@@ -83,7 +86,7 @@ class ResourceMarket:
             return total_price
         return None
 
-    def take_resources(self, resources: list[Resource]) -> None:
+    def take_resources(self, resources: Sequence[Resource]) -> None:
         to_take_counts = Counter(resources)
         for resource in Resource:
             to_take = to_take_counts[resource]
